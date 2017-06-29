@@ -60,16 +60,11 @@ class Song(object):
         # If title or artist unknown or non existing, check for - in title
         # and extract title and artist from there
         except (KeyError, ID3NoHeaderError):
-            if ' - ' in f:
-                tupl = f.split(' - ')
-                artist_arr = tupl[0].split('/')
-                artist = artist_arr[len(artist_arr) - 1]
-                title = tupl[1].split('.')[0]
-                album = ""
-            elif ' by ' in f:
-                tupl = f.split(' by ')
-                artist_arr = tupl[0].split('/')
-                artist = artist_arr[len(artist_arr) - 1]
+            file_arr = f.split('/')
+            filename = file_arr[len(file_arr) - 1]
+            if ' - ' in filename:
+                tupl = filename.split(' - ')
+                artist = tupl[0]
                 title = tupl[1].split('.')[0]
                 album = ""
             else:

@@ -48,13 +48,19 @@ def make_playlists(username):
                 result = results['tracks']['items'][0]['id']
                 song_ids.append(result)
             else:
-                time.sleep(0.2)
                 print(song.title + " by " + song.artist +
                       " could not be found.")
         # Add songs to playlist
-        results = spotify.user_playlist_add_tracks(username, pl_id, song_ids)
+        for chunk in chunk_array(song_ids, 100):
+            results = spotify.user_playlist_add_tracks(username, pl_id, chunk)
         print("Playlist " + pl_name + " was successfully created.")
     print("Done!")
+
+
+def chunk_array(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 def build_spotify_playlists():
