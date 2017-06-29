@@ -1,4 +1,5 @@
 from mutagen import easyid3, asf, flac, mp4
+from mutagen.id3._util import ID3NoHeaderError
 import warnings
 
 
@@ -14,7 +15,7 @@ class Song(object):
         self.album = album
 
     def __new__(cls, title, artist, album):
-        if title is None and artist is None:
+        if title is None or artist is None:
             return None
         return super(Song, cls).__new__(cls)
 
@@ -27,6 +28,9 @@ class Song(object):
 
     @staticmethod
     def set_song_attributes(f):
+        title = None
+        artist = None
+        album = None
         # Try to read file attributes
         try:
             if f.endswith(".mp3"):
@@ -49,20 +53,34 @@ class Song(object):
                 title = audio.tags['\xa9nam'][0]
                 artist = audio.tags['\xa9ART'][0]
                 album = audio.tags['\xa9alb'][0]
-            else:
+            elif f.endswith(".wav") or f.endswith(".ogg"):
                 warnings.warn("The following file is not supported: " + f)
             # Return all data values
             return title, artist, album
         # If title or artist unknown or non existing, check for - in title
         # and extract title and artist from there
-        except KeyError:
-            if '-' in f:
+        except (KeyError, ID3NoHeaderError):
+            if ' - ' in f:
                 tupl = f.split(' - ')
-                title = tupl[0]
-                artist = tupl[1]
+                artist_arr = tupl[0].split('/')
+                artist = artist_arr[len(artist_arr) - 1]
+                title = tupl[1].split('.')[0]
                 album = ""
-                return title, artist, album
+            elif ' by ' in f:
+                tupl = f.split(' by ')
+                artist_arr = tupl[0].split('/')
+                artist = artist_arr[len(artist_arr) - 1]
+                title = tupl[1].split('.')[0]
+                album = ""
             else:
                 warnings.warn("Could not extract information from the " +
                               "following file: " + f)
-                return None, None, None
+            return title, artist, album
+
+    @staticmethod
+    def parse_song_title(title):
+        if title:
+            title = title.replace("'", "").replace(",", "")
+            title = title.replace("[", "").replace("]", "")
+            title = title.replace("(", "").replace(")", "")
+        return title
